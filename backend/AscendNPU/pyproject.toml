@@ -1,0 +1,24 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "cmake>=3.20", "ninja"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "triton-ascend-backend"
+version = "0.1.0"
+description = "Experimental Ascend NPU backend scaffold for Triton"
+requires-python = ">=3.10"
+
+[project.entry-points."triton.backends"]
+ascend = "triton_ascend_backend"
+
+[tool.triton-ext]
+status = "experimental"
+enabled = true
+
+[tool.scikit-build]
+cmake.version = ">=3.20"
+wheel.platlib = false
+wheel.exclude = ["**/__pycache__/**", "**/*.pyc"]
+
+[tool.scikit-build.wheel.packages]
+triton_ascend_backend = "python/triton_ascend_backend"

@@ -57,7 +57,7 @@ repos:
     rev: "v1.15.0"
     hooks:
       - id: mypy
-        additional_dependencies: [types-requests]
+        additional_dependencies: [types-requests, 'tomli>=2.0.1; python_version < "3.11"']
         exclude: '^extensions/utlx/(test/|examples/kda_prefill/)'
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
@@ -71,12 +71,13 @@ repos:
         name: check extension manifests
         entry: ci/list_extensions.py
         language: python
+        additional_dependencies: ['tomli>=2.0.1; python_version < "3.11"']
         pass_filenames: false
       - id: doctests
         name: run doctests
         entry: ci/doctests.py
         language: python
-        additional_dependencies: [requests]
+        additional_dependencies: [requests, 'tomli>=2.0.1; python_version < "3.11"']
         pass_filenames: false
 
 # Third-party code vendored verbatim from facebookexperimental/triton, kept

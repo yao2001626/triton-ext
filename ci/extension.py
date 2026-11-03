@@ -14,7 +14,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import common
-import tomllib
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 VALID_STATUS = {"experimental", "stable"}
 TRITON_PREFIX = "triton-"
