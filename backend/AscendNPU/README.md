@@ -1,68 +1,40 @@
 # Ascend NPU Backend for Triton
 
-Experimental out-of-tree backend scaffold, following the package structure and
-`triton.backends` entry point used by [Apple GPU](../AppleGPU/README.md).
-
-This patch establishes discovery and packaging only. It cannot compile or launch
-kernels. The driver always reports inactive, including on Ascend hosts, and
-explicit compilation raises `NotImplementedError` before AST lowering.
-
-## Layout
-
-```text
-backend/AscendNPU/
-  CMakeLists.txt
-  Makefile
-  pyproject.toml
-  python/triton_ascend_backend/
-    __init__.py
-    compiler.py
-    driver.py
-  test/test_ascend_backend.py
-```
+Experimental out-of-tree Ascend A5 pure-SIMT backend for upstream Triton 3.7.0.
+It compiles TTIR through CANN's `bishengir-compile` and launches kernels through
+CANN and torch-npu. The compiler and runtime are ported from
+[Triton-Ascend](https://github.com/triton-lang/triton-ascend).
 
 ## Build and test
 
-Use the Python environment described in the
-[repository README](../../README.md). From the repository root:
+Use Python 3.10 or later, Triton 3.7.0, pybind11 3.0.1, CMake, Ninja, and
+scikit-build-core. The native attribute binding requires LLVM/MLIR headers from
+Triton 3.7.0's LLVM revision `ac5dc54d509169d387fcfd495d71853d81c46484`.
 
 ```bash
+export LLVM_INSTALL_DIR=/path/to/matching/llvm
 make -C backend/AscendNPU build
 make -C backend/AscendNPU install
 make -C backend/AscendNPU test
 ```
 
-The root `make build` and `make test` discover this extension automatically
-through `[tool.triton-ext]`. Tests require the built wheel to be installed,
-matching the Apple GPU workflow. These discovery tests require Triton but no
-CANN or hardware. There are no native passes to build in this initial patch.
+The two smoke tests cover backend discovery and vector-add lowering to TTIR.
+They require the installed wheel but do not require CANN or an NPU.
 
-## Completing the backend
+## Run the examples
 
-The existing [triton-ascend implementation][ascend] is the reference for the
-port. Its compiler imports Ascend-specific bindings from its customized
-`libtriton`; copying its Python files or depending on its wheel does not provide
-an independent backend for upstream Triton.
+Install compatible PyTorch and torch-npu packages, then source the CANN
+environment. The backend preserves the device's reported target architecture.
 
-Before treating this as an operational backend:
+```bash
+source /path/to/cann/set_env.sh
+export TRITON_DEFAULT_BACKEND=ascend_a5
+python backend/AscendNPU/examples/01-vector-add.py
+python backend/AscendNPU/examples/02-fused-softmax.py
+```
 
-- Select and pin compatible Triton, LLVM, triton-ascend and CANN revisions, plus
-  the initial supported Ascend device family.
-- Port the necessary Ascend dialects and lowering passes into a native plugin,
-  registered through `tritonGetPluginInfo`, as Apple GPU does. Load that library
-  from this package and register its dialects on compilation contexts.
-- Implement TTIR lowering and BiSheng binary generation, including validated
-  compiler options, metadata and toolchain-sensitive cache keys. Do not reuse
-  Metal's TTGIR layouts or SIMD width as Ascend hardware defaults.
-- Implement CANN binary loading, argument packing, streams and kernel launch,
-  with a compatible torch-npu integration.
-- Add compile tests and hardware tests for masked vector addition, including
-  tail elements and multiple launches. Enable driver activation only after these
-  paths work together.
-- Establish maintainers and an Ascend CI/deployment plan before upstream
-  submission, as required by the repository's contributing guidelines.
+Both examples passed correctness checks on Ascend 950 with Triton 3.7.0 and CANN
+9.3.0's BiShengIR 2.0.0 compiler at revision `cba6779b8e1e`. Compiler
+capabilities vary between CANN releases; this does not establish compatibility
+with every CANN 9.3.0 build.
 
-Installing this scaffold alongside another backend with an `ascend` entry point
-is unsupported: Triton's discovery dictionary uses entry point names as keys.
-
-[ascend]: https://github.com/triton-lang/triton-ascend

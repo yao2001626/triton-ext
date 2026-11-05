@@ -1,24 +1,27 @@
 [build-system]
-requires = ["scikit-build-core>=0.10", "cmake>=3.20", "ninja"]
+requires = ["scikit-build-core>=0.10", "cmake>=3.20", "ninja", "pybind11==3.0.1", "triton==3.7.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "triton-ascend-backend"
 version = "0.1.0"
-description = "Experimental Ascend NPU backend scaffold for Triton"
+description = "Experimental Huawei A5 SIMT backend using BiShengIR and CANN"
 requires-python = ">=3.10"
+dependencies = ["triton==3.7.0", "pybind11==3.0.1"]
 
 [project.entry-points."triton.backends"]
-ascend = "triton_ascend_backend"
+ascend_a5 = "triton_ascend_backend"
+
+[tool.scikit-build]
+cmake.version = ">=3.20"
+cmake.build-type = "Release"
+wheel.exclude = ["**/__pycache__/**", "**/*.pyc", "**/*.egg-info/**"]
+sdist.include = ["CMakeLists.txt", "src/**", "python/**"]
+sdist.exclude = ["build/**", "**/*.so", "**/*.egg-info/**"]
+
+[tool.scikit-build.wheel.packages]
+triton_ascend_backend = "python/triton_ascend_backend"
 
 [tool.triton-ext]
 status = "experimental"
 enabled = true
-
-[tool.scikit-build]
-cmake.version = ">=3.20"
-wheel.platlib = false
-wheel.exclude = ["**/__pycache__/**", "**/*.pyc"]
-
-[tool.scikit-build.wheel.packages]
-triton_ascend_backend = "python/triton_ascend_backend"
